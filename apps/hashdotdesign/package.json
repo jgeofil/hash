@@ -24,7 +24,7 @@
     "@storybook/testing-library": "0.2.2",
     "@types/react": "19.0.8",
     "@types/react-dom": "19.0.3",
-    "storybook": "7.6.20"
+    "storybook": "7.6.21"
   },
   "peerDependencies": {
     "@emotion/cache": "11.14.0",
