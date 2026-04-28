@@ -11,9 +11,6 @@ on:
       - canary
       - dev/*
 
-  schedule:
-    - cron: "30 0 1,15 * *" # scheduled for 00:30 UTC on both the 1st and 15th of the month
-
 jobs:
   semgrep:
     name: Scan
