@@ -4,6 +4,7 @@ on:
   pull_request_target:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   auto-approve:
@@ -16,9 +17,10 @@ jobs:
     # - Check the event (only commits should trigger auto-approvals)
     # - (optional) check for green CI
     # see: https://linear.app/hash/issue/H-3313/further-restrict-auto-approval-workflow
-    if: github.actor == 'hash-worker[bot]' && startsWith(github.head_ref, 'deps/')
+    if: github.actor == 'dependabot[bot]'
     steps:
       - name: Renovate
         uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.MACHINE_USER_TOKEN }}
+          review-message: Dependabot PR approved
