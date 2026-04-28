@@ -28,6 +28,7 @@ import { PlaceNode } from "./components/place-node";
 import { TransitionNode } from "./components/transition-node";
 import { ViewportControls } from "./components/viewport-controls";
 import { useApplyNodeChanges } from "./hooks/use-apply-node-changes";
+import { useRecenterOnPanelOpen } from "./hooks/use-recenter-on-panel-open";
 import { useSdcpnToReactFlow } from "./hooks/use-sdcpn-to-react-flow";
 import type { PetrinautReactFlowInstance } from "./reactflow-types";
 
@@ -45,7 +46,7 @@ const REACTFLOW_EDGE_TYPES = {
   default: Arc,
 };
 
-const ZOOM_PADDING = 0.5;
+const ZOOM_PADDING = 0.4;
 
 const canvasContainerStyle = css({
   width: "[100%]",
@@ -54,6 +55,13 @@ const canvasContainerStyle = css({
   "& .react-flow__pane": {
     cursor: `var(--pane-cursor) !important`,
   },
+});
+
+const fadeBgStyle = css({
+  position: "absolute",
+  inset: "[0]",
+  background: "[rgba(255, 255, 255, 0.3)]",
+  pointerEvents: "none",
 });
 
 /**
@@ -87,6 +95,9 @@ export const SDCPNView: React.FC<{
     cursorMode,
     selectItem,
     clearSelection,
+    hasCanvasSelection,
+    setHoveredItem,
+    clearHoveredItem,
   } = use(EditorContext);
 
   // Hook for applying node changes
@@ -94,6 +105,9 @@ export const SDCPNView: React.FC<{
 
   // Convert SDCPN to ReactFlow format with dragging state
   const { nodes, arcs } = useSdcpnToReactFlow();
+
+  // When a panel opens, recenter the viewport to keep selected nodes visible
+  useRecenterOnPanelOpen(canvasContainer, reactFlowInstance, nodes);
 
   // Center viewport on SDCPN load
   useEffect(() => {
@@ -129,7 +143,8 @@ export const SDCPNView: React.FC<{
         const currentZoom = instance?.getViewport().zoom;
         const safeZoom = currentZoom ? Math.min(currentZoom, newZoom) : newZoom;
 
-        setMinZoom(safeZoom);
+        // even if theres only a single place, always allow the user to zoom out at least a minimum reasonable amount
+        setMinZoom(Math.min(safeZoom, 0.75));
       }
     },
     100,
@@ -234,6 +249,26 @@ export const SDCPNView: React.FC<{
   // because we want arcs selectable only by click, not by drag-to-select.
   function onEdgeClick(_event: React.MouseEvent, edge: { id: string }) {
     selectItem({ type: "arc", id: edge.id });
+  }
+
+  function onNodeMouseEnter(
+    _event: React.MouseEvent,
+    node: { id: string; type?: string },
+  ) {
+    const type = node.type as "place" | "transition" | undefined;
+    if (type) setHoveredItem({ type, id: node.id });
+  }
+
+  function onNodeMouseLeave() {
+    clearHoveredItem();
+  }
+
+  function onEdgeMouseEnter(_event: React.MouseEvent, edge: { id: string }) {
+    setHoveredItem({ type: "arc", id: edge.id });
+  }
+
+  function onEdgeMouseLeave() {
+    clearHoveredItem();
   }
 
   function onPaneClick(event: React.MouseEvent) {
@@ -365,6 +400,10 @@ export const SDCPNView: React.FC<{
         onConnect={isReadonly ? undefined : onConnect}
         onInit={onInit}
         onEdgeClick={onEdgeClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
+        onEdgeMouseEnter={onEdgeMouseEnter}
+        onEdgeMouseLeave={onEdgeMouseLeave}
         onPaneClick={onPaneClick}
         onDrop={isReadonly ? undefined : onDrop}
         onDragOver={isReadonly ? undefined : onDragOver}
@@ -389,6 +428,7 @@ export const SDCPNView: React.FC<{
         minZoom={minZoom}
       >
         <Background gap={SNAP_GRID_SIZE} size={1} />
+        {hasCanvasSelection && <div className={fadeBgStyle} />}
         {showMinimap && <MiniMap pannable zoomable />}
         <ViewportControls viewportActions={viewportActions} />
       </ReactFlow>

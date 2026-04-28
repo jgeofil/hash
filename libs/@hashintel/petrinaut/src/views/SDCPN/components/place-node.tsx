@@ -52,7 +52,13 @@ export const PlaceNode: React.FC<NodeProps<PlaceNodeType>> = ({
   isConnectable,
   selected,
 }: NodeProps<PlaceNodeType>) => {
-  const { globalMode, isSelected } = use(EditorContext);
+  const {
+    globalMode,
+    isSelected,
+    isNotSelectedConnection,
+    hoveredItem,
+    isNotHoveredConnection,
+  } = use(EditorContext);
   const isSimulateMode = globalMode === "simulate";
   const { initialMarking } = use(SimulationContext);
   const { currentViewedFrame } = use(PlaybackContext);
@@ -73,7 +79,10 @@ export const PlaceNode: React.FC<NodeProps<PlaceNodeType>> = ({
     ? "resource"
     : selected
       ? "reactflow"
-      : "none";
+      : isNotHoveredConnection(id) ||
+          (!hoveredItem && isNotSelectedConnection(id))
+        ? "notSelectedConnection"
+        : "none";
 
   const subtitle = data.dynamicsEnabled ? "Place (Dynamics)" : "Place";
 
@@ -82,7 +91,7 @@ export const PlaceNode: React.FC<NodeProps<PlaceNodeType>> = ({
     : undefined;
 
   const placeBackgroundColor = data.typeColor
-    ? hexToHsl(data.typeColor).lighten(30).css(0.9)
+    ? hexToHsl(data.typeColor).lighten(30).css(1)
     : "#FFFFFF";
 
   return (
