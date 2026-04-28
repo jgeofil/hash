@@ -4,6 +4,6 @@ updates:
     directories:
       - "**/*"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     labels: []
     open-pull-requests-limit: 0
